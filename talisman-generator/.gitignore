@@ -1,0 +1,43 @@
+# OpenClaw workspace files
+add-baidu-models.sh
+baidu-config-guide.md
+符箓生成器_README.md
+符箓生成器_快速操作脚本.md
+符箓生成器_技术分析.md
+符箓生成器_服务器信息.md
+符箓生成器_源代码.html
+符箓生成器_部署指南.md
+符箓生成器_项目交接文档.md
+项目检查脚本.md
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+
+# Node.js (if needed in future)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

@@ -1,0 +1,249 @@
+# 符箓生成器部署指南
+
+## 服务器信息
+
+### 基本信息
+- **主服务器**：106.14.237.27
+- **备用服务器**：172.24.19.113
+- **域名**：ai-newland.com
+- **路径**：/var/www/fu/
+- **访问地址**：https://ai-newland.com/fu.html
+
+### 服务器配置
+- **Web服务器**：Nginx 1.30.2
+- **操作系统**：Linux
+- **权限**：root用户
+- **备份策略**：定期备份到 /var/backups/fu/
+
+## 部署步骤
+
+### 1. 连接到服务器
+```bash
+# 主服务器
+ssh root@106.14.237.27
+
+# 备用服务器
+ssh root@172.24.19.113
+
+# 或使用域名
+ssh root@ai-newland.com
+```
+
+### 2. 进入项目目录
+```bash
+cd /var/www/fu/
+```
+
+### 3. 查看当前文件
+```bash
+# 查看主服务器文件
+ls -la
+
+# 查看备用服务器文件
+ssh root@172.24.19.113 "ls -la /var/www/fu/"
+
+# 查看文件详情
+ls -la index.html
+ls -la images/
+```
+
+### 4. 备份当前版本（可选）
+```bash
+cp index.html index.html.backup
+```
+
+### 5. 更新文件
+```bash
+# 上传到主服务器
+scp /path/to/new/index.html root@106.14.237.27:/var/www/fu/
+
+# 上传到备用服务器
+scp /path/to/new/index.html root@172.24.19.113:/var/www/fu/
+
+# 或直接编辑
+nano index.html
+
+# 批量更新脚本（推荐）
+# 使用之前创建的 batch_update.sh 脚本
+```
+
+### 6. 设置文件权限
+```bash
+chmod 644 index.html
+chmod -R 755 images/
+```
+
+### 7. 重启Nginx（如果需要）
+```bash
+# 在主服务器上
+systemctl restart nginx
+
+# 在备用服务器上
+ssh root@172.24.19.113 "systemctl restart nginx"
+
+# 批量重启
+ssh root@106.14.237.27 "systemctl restart nginx" && ssh root@172.24.19.113 "systemctl restart nginx"
+```
+
+### 8. 验证部署
+```bash
+# 检查网站访问
+curl -I https://ai-newland.com/fu.html
+
+# 检查服务器状态
+ssh root@106.14.237.27 "systemctl status nginx"
+```
+
+## 文件结构
+
+### 当前文件结构
+```
+/var/www/fu/
+├── index.html      # 主页面（包含所有HTML、CSS、JavaScript代码）
+└── images/         # 图片资源目录
+    └── payment/    # 付款相关图片
+```
+
+### 文件权限
+- `index.html`：644 (rw-r--r--)
+- `images/`：755 (rwxr-xr-x)
+- `images/payment/`：755 (rwxr-xr-x)
+
+## 常见问题
+
+### 1. 文件权限问题
+```bash
+# 检查权限
+ls -la /var/www/fu/
+
+# 修复权限
+chmod 644 index.html
+chmod -R 755 images/
+```
+
+### 2. Nginx配置问题
+```bash
+# 检查Nginx状态
+systemctl status nginx
+
+# 检查配置文件
+nginx -t
+
+# 查看访问日志
+tail -f /var/log/nginx/access.log
+
+# 查看错误日志
+tail -f /var/log/nginx/error.log
+```
+
+### 3. 文件上传问题
+```bash
+# 使用SCP上传
+scp /local/path/to/index.html root@106.14.237.27:/var/www/fu/
+
+# 使用rsync同步
+rsync -avz /local/path/to/ root@106.14.237.27:/var/www/fu/
+```
+
+## 性能优化
+
+### 1. 启用Gzip压缩
+在Nginx配置中添加：
+```nginx
+gzip on;
+gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+```
+
+### 2. 添加缓存头
+在Nginx配置中添加：
+```nginx
+location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+```
+
+### 3. 优化图片
+- 使用WebP格式（如果浏览器支持）
+- 压缩图片大小
+- 使用CDN加速
+
+## 安全建议
+
+### 1. 文件安全
+- 定期备份
+- 设置适当的文件权限
+- 避免直接暴露敏感信息
+
+### 2. 代码安全
+- 避免在前端硬编码敏感信息
+- 使用HTTPS协议
+- 定期更新依赖项
+
+### 3. 付费功能安全
+- 使用后端验证解锁码
+- 加密用户数据
+- 防止重复支付
+
+## 监控和维护
+
+### 1. 日志监控
+```bash
+# 查看访问日志
+tail -f /var/log/nginx/access.log
+
+# 查看错误日志
+tail -f /var/log/nginx/error.log
+
+# 查看系统资源
+top
+htop
+df -h
+```
+
+### 2. 定期维护
+- 每周备份重要文件
+- 每月检查服务器性能
+- 每季度更新安全补丁
+
+### 3. 性能监控
+- 监控页面加载时间
+- 监控服务器响应时间
+- 监控内存和CPU使用率
+
+## 自动化脚本
+
+### 1. 快速部署
+```bash
+#!/bin/bash
+# 快速部署脚本
+SERVERS=("106.14.237.27" "172.24.19.113")
+PROJECT_PATH="/var/www/fu"
+
+for server in "${SERVERS[@]}"; do
+    echo "部署到: $server"
+    scp index.html root@$server:$PROJECT_PATH/
+    ssh root@$server "chmod 644 $PROJECT_PATH/index.html"
+    ssh root@$server "systemctl restart nginx"
+done
+```
+
+### 2. 健康检查
+```bash
+#!/bin/bash
+# 健康检查脚本
+URL="https://ai-newland.com/fu.html"
+
+if curl -s --head $URL | grep -q "200 OK"; then
+    echo "✓ 网站正常"
+else
+    echo "✗ 网站异常"
+fi
+```
+
+## 联系信息
+
+如有部署问题，请联系：
+- 系统管理员：[待补充]
+- 技术支持：[待补充]
+- 项目负责人：[待补充]

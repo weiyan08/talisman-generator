@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<title>专属符箓生成器 | 五行八卦·手机屏保</title>
+<meta name="description" content="输入姓名和生辰，按五行八卦自动生成专属符图手机屏保。平安符、招财符、文昌符、桃花符、健康符，三种风格可选。">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0A0A15;
+  --card: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.08);
+  --accent: #00D4FF;
+  --violet: #7C3AED;
+  --text: #F0F0F5;
+  --text2: #9CA3AF;
+  --text3: #6B7280;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.hero { text-align: center; padding: 40px 0 24px; }
+.hero-badge {
+  display: inline-block; padding: 4px 16px; border-radius: 100px;
+  border: 1px solid rgba(0,212,255,0.2); background: rgba(0,212,255,0.05);
+  font-size: 11px; color: var(--accent); margin-bottom: 12px;
+}
+.hero-title { font-size: 28px; font-weight: 900; margin-bottom: 6px; }
+.hero-title .grad { background: linear-gradient(135deg, #00D4FF, #7C3AED); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-desc { font-size: 13px; color: var(--text2); }
+.section { margin-bottom: 24px; }
+.section-title {
+  font-size: 14px; font-weight: 700; margin-bottom: 10px;
+  padding-left: 8px; border-left: 3px solid var(--accent);
+}
+.input, .picker {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; color: var(--text); font-size: 15px;
+  outline: none; transition: border-color 0.3s;
+}
+.input:focus, .picker:focus { border-color: var(--accent); }
+.picker { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.picker::after { content: "▾"; color: var(--text3); }
+.type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.type-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 6px; text-align: center; cursor: pointer; transition: all 0.3s;
+}
+.type-card.active { border-color: var(--accent); background: rgba(0,212,255,0.08); }
+.type-icon { font-size: 24px; margin-bottom: 4px; }
+.type-label { font-size: 12px; font-weight: 700; }
+.type-desc { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.style-list { display: flex; flex-direction: column; gap: 8px; }
+.style-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; cursor: pointer; position: relative; transition: all 0.3s;
+}
+.style-card.active { border-color: var(--accent); background: rgba(0,212,255,0.08); }
+.style-label { font-size: 15px; font-weight: 700; }
+.style-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.style-check { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); font-size: 18px; }
+.btn-generate {
+  width: 100%; background: linear-gradient(135deg, #00D4FF, #7C3AED);
+  color: #050507; text-align: center; padding: 16px; border-radius: 100px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer; margin-top: 8px;
+}
+.disclaimer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 20px; padding: 0 16px; line-height: 1.6; }
+
+/* 结果页 */
+.result-page { display: none; }
+.result-page.show { display: block; }
+.canvas-wrapper { position: relative; text-align: center; margin-bottom: 16px; }
+#talismanCanvas { max-width: 100%; border-radius: 12px; box-shadow: 0 8px 40px rgba(0,212,255,0.1); }
+.watermark-tip {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.6); color: #FFD700; font-size: 10px;
+  padding: 3px 12px; border-radius: 100px; white-space: nowrap;
+}
+.info-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 10px;
+}
+.info-row { display: flex; justify-content: space-between; padding: 4px 0; }
+.info-label { color: var(--text3); font-size: 13px; }
+.info-value { color: var(--text); font-size: 13px; font-weight: 500; }
+.desc-card {
+  background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.1);
+  border-radius: 10px; padding: 14px; margin-bottom: 16px;
+}
+.desc-text { color: var(--text2); font-size: 13px; line-height: 1.6; }
+.btn-save {
+  width: 100%; background: linear-gradient(135deg, #00D4FF, #7C3AED);
+  color: #050507; text-align: center; padding: 16px; border-radius: 100px;
+  font-size: 16px; font-weight: 700; border: none; cursor: pointer; margin-bottom: 8px;
+}
+.btn-back {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  color: var(--text2); text-align: center; padding: 14px; border-radius: 100px;
+  font-size: 14px; cursor: pointer;
+}
+.pay-hint {
+  margin-top: 20px; padding: 16px; background: rgba(255,215,0,0.05);
+  border: 1px solid rgba(255,215,0,0.1); border-radius: 10px;
+  text-align: center; display: flex; flex-direction: column; gap: 4px;
+}
+.pay-hint text { font-size: 12px; color: var(--text2); }
+.pay-btn {
+  background: #FFD700; color: #050507; text-align: center; padding: 12px;
+  border-radius: 100px; font-size: 15px; font-weight: 700; border: none; cursor: pointer; margin-top: 8px;
+}
+
+/* 付费弹窗 */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #0F0F20; border: 1px solid var(--border); border-radius: 16px;
+  padding: 24px; max-width: 400px; width: 100%; text-align: center;
+}
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+.qr-placeholder {
+  width: 200px; height: 200px; margin: 0 auto 12px;
+  background: rgba(255,255,255,0.05); border: 2px dashed var(--border);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  color: var(--text3); font-size: 12px;
+}
+.modal-price { font-size: 32px; font-weight: 900; color: var(--accent); margin-bottom: 16px; }
+.modal-note { font-size: 12px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+.unlock-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px; color: var(--text); font-size: 15px;
+  text-align: center; margin-bottom: 12px; outline: none;
+}
+.unlock-input:focus { border-color: var(--accent); }
+.modal-btn {
+  width: 100%; background: var(--accent); color: #050507; text-align: center;
+  padding: 12px; border-radius: 100px; font-size: 15px; font-weight: 700;
+  border: none; cursor: pointer; margin-bottom: 8px;
+}
+.modal-close {
+  width: 100%; background: transparent; color: var(--text2); text-align: center;
+  padding: 8px; font-size: 13px; border: none; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- 首页 -->
+<div id="formPage" class="form-page">
+  <div class="hero">
+    <div class="hero-badge">⚡ 传统文化 × AI生成</div>
+    <div class="hero-title"><span class="grad">专属符箓生成器</span></div>
+    <div class="hero-desc">输入姓名生辰，按五行八卦生成你的专属符图屏保</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">姓名</div>
+    <input class="input" id="nameInput" placeholder="请输入您的姓名" maxlength="10">
+  </div>
+
+  <div class="section">
+    <div class="section-title">出生日期</div>
+    <input class="input" type="date" id="dateInput" value="2000-01-01" min="1900-01-01" max="2026-12-31">
+  </div>
+
+  <div class="section">
+    <div class="section-title">出生时辰</div>
+    <select class="input" id="timeSelect"></select>
+  </div>
+
+  <div class="section">
+    <div class="section-title">选择符类型</div>
+    <div class="type-grid" id="typeGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">选择风格</div>
+    <div class="style-list" id="styleList"></div>
+  </div>
+
+  <button class="btn-generate" onclick="generate()">生成专属符箓</button>
+  <div class="disclaimer">本工具基于传统文化五行八卦算法，仅供娱乐参考，不构成任何预测或建议。</div>
+</div>
+
+<!-- 结果页 -->
+<div id="resultPage" class="result-page">
+  <div class="canvas-wrapper">
+    <canvas id="talismanCanvas" width="1080" height="1920"></canvas>
+    <div id="watermarkTip" class="watermark-tip" style="display:none;">免费版带水印 · 付费解锁高清无水印</div>
+  </div>
+
+  <div class="info-card" id="infoCard"></div>
+  <div class="desc-card" id="descCard"></div>
+
+  <button class="btn-save" id="saveBtn" onclick="saveImage()">💾 保存高清屏保</button>
+  <button class="btn-back" onclick="backToForm()">重新生成</button>
+
+  <div class="pay-hint" id="payHint">
+    <text>免费版：带水印 · 720p普清</text>
+    <text>高清版：¥9.9 · 无水印 · 4K · 精致边框</text>
+    <button class="pay-btn" onclick="showPayModal()">立即解锁高清版</button>
+  </div>
+</div>
+
+<!-- 付费弹窗 -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <div class="modal-title">解锁高清版</div>
+    <div class="qr-placeholder">[放微信收款码图片]</div>
+    <div class="modal-price">¥9.9</div>
+    <div class="modal-note">扫码支付后，截图发送客服获取解锁码<br>客服微信：你的微信号</div>
+    <input class="unlock-input" id="unlockInput" placeholder="请输入解锁码">
+    <button class="modal-btn" onclick="verifyCode()">解锁</button>
+    <button class="modal-close" onclick="closePayModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ============ 八字算法 ============
+const TIAN_GAN = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const GAN_WX = ["木","木","火","火","土","土","金","金","水","水"];
+const DI_ZHI = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+const ZHI_WX = ["水","土","木","木","土","火","火","土","金","金","土","水"];
+const SX = ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"];
+const WX_COLORS = {
+  金:{main:"#C8A951",bg:"#FBF6E9",text:"#8B6914"},
+  木:{main:"#4A8B3A",bg:"#E8F5E0",text:"#2D5F1E"},
+  水:{main:"#2E5C8A",bg:"#E0EBF5",text:"#1A3D5C"},
+  火:{main:"#C83828",bg:"#FBEBE8",text:"#8B1A10"},
+  土:{main:"#B8860B",bg:"#F5F0E0",text:"#8B6508"}
+};
+const BAGUA = [
+  {name:"乾",symbol:"☰",nature:"天",wx:"金",desc:"天行健，君子以自强不息"},
+  {name:"兑",symbol:"☱",nature:"泽",wx:"金",desc:"和悦待人，心情舒畅"},
+  {name:"离",symbol:"☲",nature:"火",wx:"火",desc:"光明磊落，前途光明"},
+  {name:"震",symbol:"☳",nature:"雷",wx:"木",desc:"雷厉风行，奋发图强"},
+  {name:"巽",symbol:"☴",nature:"风",wx:"木",desc:"顺势而为，柔而不弱"},
+  {name:"坎",symbol:"☵",nature:"水",wx:"水",desc:"处险不惊，化险为夷"},
+  {name:"艮",symbol:"☶",nature:"山",wx:"土",desc:"知止而后有定，稳如泰山"},
+  {name:"坤",symbol:"☷",nature:"地",wx:"土",desc:"地势坤，君子以厚德载物"}
+];
+
+function calcBazi(y,m,d,h){
+  const yg=(y-1900+6)%10, yz=(y-1900)%12;
+  const mzm=[2,3,4,5,6,7,8,9,10,11,0,1];
+  const mz=mzm[m-1], sg=[2,4,6,8,0,2,4,6,8,0];
+  const mg=(sg[yg]+(m-1))%10;
+  const base=new Date(1900,0,1), tgt=new Date(y,m-1,d);
+  const diff=Math.floor((tgt-base)/86400000);
+  const dg=diff%10, dz=(diff+10)%12;
+  const hzm=[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11];
+  const hz=hzm[h], sgg=[0,2,4,6,8,0];
+  const hg=(sgg[dg%5]+Math.floor((h+1)/2))%10;
+  const els=[GAN_WX[yg],ZHI_WX[yz],GAN_WX[mg],ZHI_WX[mz],GAN_WX[dg],ZHI_WX[dz],GAN_WX[hg],ZHI_WX[hz]];
+  const wc={金:0,木:0,水:0,火:0,土:0};
+  els.forEach(e=>wc[e]++);
+  let weak="金",min=99,strong="金",max=0;
+  Object.entries(wc).forEach(([e,c])=>{if(c<min){min=c;weak=e}if(c>max){max=c;strong=e}});
+  const cyc={金:"木",木:"土",水:"火",火:"金",土:"水"};
+  const gen={金:"土",木:"水",水:"金",火:"木",土:"火"};
+  return {
+    pillars:`${TIAN_GAN[yg]}${DI_ZHI[yz]} ${TIAN_GAN[mg]}${DI_ZHI[mz]} ${TIAN_GAN[dg]}${DI_ZHI[dz]} ${TIAN_GAN[hg]}${DI_ZHI[hz]}`,
+    wc, dayMaster:GAN_WX[dg], weakest:weak, strongest:strong,
+    wealthStar:cyc[GAN_WX[dg]], resourceStar:gen[GAN_WX[dg]],
+    shengxiao:SX[yz]
+  };
+}
+
+// ============ 符类型配置 ============
+const TALISMAN_TYPES = {
+  peace:{label:"平安符",icon:"🛡️",desc:"保平安健康",blessing:"岁岁平安 诸事顺遂"},
+  wealth:{label:"招财符",icon:"💰",desc:"招财进宝",blessing:"财源广进 富贵盈门"},
+  study:{label:"文昌符",icon:"📚",desc:"学业考运",blessing:"金榜题名 学业有成"},
+  love:{label:"桃花符",icon:"💕",desc:"感情人缘",blessing:"良缘天成 喜结连理"},
+  health:{label:"健康符",icon:"🏥",desc:"祛病消灾",blessing:"身体康健 百病不侵"}
+};
+const STYLES = [
+  {key:"guochao",label:"国潮设计",desc:"深色霓虹·现代设计"},
+  {key:"taoist",label:"道教符箓",desc:"黄底朱砂·传统符纸"},
+  {key:"ink",label:"水墨禅意",desc:"宣纸水墨·文雅清秀"}
+];
+
+// ============ 状态 ============
+let state = { type:"peace", style:"guochao", isVip:false, bazi:null, config:null, name:"", birthDate:"" };
+
+// 初始化解锁状态
+if(localStorage.getItem("unlockCode")) state.isVip = true;
+
+// ============ 初始化UI ============
+function initUI(){
+  // 时辰
+  const zhi=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+  let opts="";
+  for(let i=0;i<24;i++){
+    const zi=Math.floor((i+1)/2)%12;
+    opts+=`<option value="${i}">${i<10?"0"+i:i}时 (${zhi[zi]}时)</option>`;
+  }
+  document.getElementById("timeSelect").innerHTML=opts;
+  document.getElementById("timeSelect").value=12;
+
+  // 符类型
+  document.getElementById("typeGrid").innerHTML=Object.entries(TALISMAN_TYPES).map(([k,v])=>
+    `<div class="type-card ${k===state.type?'active':''}" data-key="${k}" onclick="selectType('${k}')">
+      <div class="type-icon">${v.icon}</div><div class="type-label">${v.label}</div><div class="type-desc">${v.desc}</div></div>`
+  ).join("");
+
+  // 风格
+  document.getElementById("styleList").innerHTML=STYLES.map(s=>
+    `<div class="style-card ${s.key===state.style?'active':''}" data-key="${s.key}" onclick="selectStyle('${s.key}')">
+      <div class="style-label">${s.label}</div><div class="style-desc">${s.desc}</div>
+      ${s.key===state.style?'<div class="style-check">✓</div>':''}</div>`
+  ).join("");
+}
+
+function selectType(k){state.type=k;initUI();}
+function selectStyle(k){state.style=k;initUI();}
+
+// ============ 生成 ============
+function generate(){
+  const name=document.getElementById("nameInput").value.trim();
+  if(!name){alert("请输入姓名");return;}
+  const dateStr=document.getElementById("dateInput").value;
+  const [y,m,d]=dateStr.split("-").map(Number);
+  const h=parseInt(document.getElementById("timeSelect").value);
+
+  state.name=name; state.birthDate=dateStr;
+  state.bazi=calcBazi(y,m,d);
+  state.birthYear=y; state.birthMonth=m; state.birthDay=d;
+
+  // 符配置
+  const b=state.bazi;
+  const configs={
+    peace:{target:b.weakest,label:"平安符",icon:"🛡️",blessing:"岁岁平安 诸事顺遂",desc:`根据您的八字，五行中「${b.weakest}」最弱，此符以${b.weakest}行之力护佑平安。`},
+    wealth:{target:b.wealthStar,label:"招财符",icon:"💰",blessing:"财源广进 富贵盈门",desc:`您的财星属「${b.wealthStar}」，此符强化财星能量，助您招财纳福。`},
+    study:{target:b.resourceStar,label:"文昌符",icon:"📚",blessing:"金榜题名 学业有成",desc:`您的文昌星属「${b.resourceStar}」，此符开启智慧之门，助学业考运。`},
+    love:{target:"木",label:"桃花符",icon:"💕",blessing:"良缘天成 喜结连理",desc:`此符催旺桃花星，助感情和人缘。`},
+    health:{target:b.strongest,label:"健康符",icon:"🏥",blessing:"身体康健 百病不侵",desc:`您五行「${b.strongest}」过旺，此符平衡身心，护佑健康。`}
+  };
+  state.config={...configs[state.type],colors:WX_COLORS[configs[state.type].target]||WX_COLORS.土};
+
+  // 切换页面
+  document.getElementById("formPage").style.display="none";
+  document.getElementById("resultPage").classList.add("show");
+
+  // 绘制
+  drawTalisman();
+  // 填充信息
+  fillInfo();
+}
+
+function fillInfo(){
+  const b=state.bazi, c=state.config;
+  document.getElementById("infoCard").innerHTML=`
+    <div class="info-row"><span class="info-label">姓名</span><span class="info-value">${state.name}</span></div>
+    <div class="info-row"><span class="info-label">生辰</span><span class="info-value">${state.birthDate}</span></div>
+    <div class="info-row"><span class="info-label">八字</span><span class="info-value">${b.pillars}</span></div>
+    <div class="info-row"><span class="info-label">日主</span><span class="info-value">${b.dayMaster}</span></div>
+    <div class="info-row"><span class="info-label">五行</span><span class="info-value">金${b.wc.金} 木${b.wc.木} 水${b.wc.水} 火${b.wc.火} 土${b.wc.土}</span></div>
+    <div class="info-row"><span class="info-label">生肖</span><span class="info-value">${b.shengxiao}</span></div>`;
+  document.getElementById("descCard").innerHTML=`<div class="desc-text">${c.desc}</div>`;
+
+  if(state.isVip){
+    document.getElementById("saveBtn").textContent="💾 保存高清屏保";
+    document.getElementById("payHint").style.display="none";
+    document.getElementById("watermarkTip").style.display="none";
+  } else {
+    document.getElementById("saveBtn").textContent="🔒 付费解锁高清下载";
+    document.getElementById("payHint").style.display="flex";
+    document.getElementById("watermarkTip").style.display="block";
+  }
+}
+
+// ============ Canvas绘制 ============
+// 优化后的符箓绘制代码
+// 专业符箓大师设计
+
+// 传统配色方案
+const TRADITIONAL_COLORS = {
+  金: {
+    primary: '#C83828',    // 朱砂红
+    secondary: '#FFD700',  // 金黄
+    accent: '#8B4513',     // 深棕
+    background: '#FFF8DC',  // 米白
+    text: '#8B4513'        // 深棕文字
+  },
+  木: {
+    primary: '#228B22',    // 森林绿
+    secondary: '#90EE90',  // 浅绿
+    accent: '#006400',     // 深绿
+    background: '#F0FFF0', // 浅绿背景
+    text: '#006400'        // 深绿文字
+  },
+  水: {
+    primary: '#000080',    // 深蓝
+    secondary: '#4169E1',  // 皇家蓝
+    accent: '#87CEEB',     // 天蓝
+    background: '#E0F6FF', // 浅蓝背景
+    text: '#000080'        // 深蓝文字
+  },
+  火: {
+    primary: '#DC143C',    // 深红
+    secondary: '#FF6347',  // 番茄红
+    accent: '#FFD700',     // 金黄
+    background: '#FFF0F5', // 浅粉背景
+    text: '#DC143C'        // 深红文字
+  },
+  土: {
+    primary: '#8B4513',    // 深棕
+    secondary: '#DEB887',  // 浅棕
+    accent: '#D2691E',     // 巧克力棕
+    background: '#F5DEB3', // 小麦色背景
+    text: '#8B4513'        // 深棕文字
+  }
+};
+
+// 符文数据库
+const FU_WEN_DATABASE = {
+  peace: ['平', '安', '守', '护'],
+  wealth: ['财', '富', '禄', '贵'],
+  study: ['文', '昌', '智', '慧'],
+  love: ['缘', '情', '爱', '合'],
+  health: ['康', '宁', '寿', '福']
+};
+
+const JIAO_WENS = ['天', '地', '人', '和'];
+
+// 主绘制函数 - 专业符箓
+function drawProfessionalTalisman(ctx, W, H, config, bazi, gua, colors) {
+  // 1. 背景处理
+  drawBackground(ctx, W, H, config, colors);
+  
+  // 2. 符头绘制
+  drawFuTou(ctx, W, H, config, colors);
+  
+  // 3. 符胆绘制
+  drawFuDan(ctx, W, H, config, bazi, gua, colors);
+  
+  // 4. 符脚绘制
+  drawFuJiao(ctx, W, H, config, bazi, colors);
+  
+  // 5. 符尾绘制
+  drawFuWei(ctx, W, H, config, colors);
+  
+  // 6. 装饰元素
+  drawDecorations(ctx, W, H, config, colors);
+  
+  // 7. 文字信息
+  drawProfessionalText(ctx, W, H, config, bazi);
+}
+
+// 背景绘制
+function drawBackground(ctx, W, H, config, colors) {
+  // 渐变背景
+  const gradient = ctx.createLinearGradient(0, 0, W, H);
+  gradient.addColorStop(0, colors.background);
+  gradient.addColorStop(1, colors.accent + '20');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+  
+  // 添加纹理效果
+  ctx.fillStyle = colors.primary + '05';
+  for (let i = 0; i < 50; i++) {
+    ctx.beginPath();
+    ctx.arc(
+      Math.random() * W,
+      Math.random() * H,
+      Math.random() * 3 + 1,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+}
+
+// 符头绘制
+function drawFuTou(ctx, W, H, config, colors) {
+  const centerX = W / 2;
+  const centerY = H / 4;
+  
+  // 绘制符头（朱砂点）
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+  ctx.fillStyle = colors.primary;
+  ctx.fill();
+  
+  // 符头光芒效果
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 40 + i * 15, 0, Math.PI * 2);
+    ctx.strokeStyle = colors.primary + (60 - i * 20).toString(16);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  
+  // 符头文字
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 28px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('符', centerX, centerY + 8);
+}
+
+// 符胆绘制
+function drawFuDan(ctx, W, H, config, bazi, gua, colors) {
+  const centerX = W / 2;
+  const centerY = H / 2;
+  
+  // 绘制符胆边框
+  ctx.strokeStyle = colors.primary;
+  ctx.lineWidth = 3;
+  
+  // 外框
+  ctx.beginPath();
+  ctx.rect(centerX - 120, centerY - 120, 240, 240);
+  ctx.stroke();
+  
+  // 内框
+  ctx.beginPath();
+  ctx.rect(centerX - 80, centerY - 80, 160, 160);
+  ctx.stroke();
+  
+  // 中心符文
+  const fuWen = getFuWen(config.type);
+  ctx.fillStyle = colors.primary;
+  ctx.font = 'bold 48px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(fuWen, centerX, centerY + 15);
+  
+  // 符胆光芒
+  drawGlowEffect(ctx, centerX, centerY, colors);
+}
+
+// 符脚绘制
+function drawFuJiao(ctx, W, H, config, bazi, colors) {
+  const centerX = W / 2;
+  const centerY = H * 3 / 4;
+  
+  // 绘制符脚
+  for (let i = 0; i < 4; i++) {
+    const angle = (i * Math.PI) / 2;
+    const x = centerX + Math.cos(angle) * 100;
+    const y = centerY + Math.sin(angle) * 100;
+    
+    // 符脚圆圈
+    ctx.beginPath();
+    ctx.arc(x, y, 25, 0, Math.PI * 2);
+    ctx.fillStyle = colors.secondary;
+    ctx.fill();
+    
+    // 符脚边框
+    ctx.beginPath();
+    ctx.arc(x, y, 25, 0, Math.PI * 2);
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 符脚文字
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 20px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(JIAO_WENS[i], x, y + 7);
+  }
+}
+
+// 符尾绘制
+function drawFuWei(ctx, W, H, config, colors) {
+  const centerX = W / 2;
+  const bottomY = H - 100;
+  
+  // 绘制符尾印章
+  ctx.fillStyle = colors.primary;
+  ctx.fillRect(centerX - 40, bottomY, 80, 80);
+  
+  // 印章文字
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 32px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('印', centerX, bottomY + 40);
+}
+
+// 装饰元素绘制
+function drawDecorations(ctx, W, H, config, colors) {
+  // 绘制祥云
+  drawClouds(ctx, W, H, colors);
+  
+  // 绘制符咒边框
+  drawFuBorder(ctx, W, H, colors);
+  
+  // 绘制八卦符号
+  drawBaguaSymbols(ctx, W, H, gua, colors);
+}
+
+// 祥云绘制
+function drawClouds(ctx, W, H, colors) {
+  ctx.fillStyle = colors.secondary + '30';
+  
+  // 左上祥云
+  drawCloud(ctx, 120, 120, 60);
+  drawCloud(ctx, W - 150, 100, 50);
+  drawCloud(ctx, 100, H - 120, 55);
+  drawCloud(ctx, W - 120, H - 100, 65);
+}
+
+function drawCloud(ctx, x, y, size) {
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.8, 0, Math.PI * 2);
+  ctx.arc(x + size * 1.2, y, size * 0.7, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 符咒边框
+function drawFuBorder(ctx, W, H, colors) {
+  ctx.strokeStyle = colors.primary;
+  ctx.lineWidth = 2;
+  
+  // 外框
+  ctx.strokeRect(30, 30, W - 60, H - 60);
+  
+  // 内框
+  ctx.strokeRect(60, 60, W - 120, H - 120);
+  
+  // 角落装饰
+  drawCornerDecoration(ctx, 30, 30, colors);
+  drawCornerDecoration(ctx, W - 30, 30, colors);
+  drawCornerDecoration(ctx, 30, H - 30, colors);
+  drawCornerDecoration(ctx, W - 30, H - 30, colors);
+}
+
+function drawCornerDecoration(ctx, x, y, colors) {
+  ctx.strokeStyle = colors.primary;
+  ctx.lineWidth = 2;
+  
+  // 左上角
+  if (x === 30 && y === 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + 20, y);
+    ctx.stroke();
+  }
+  
+  // 右上角
+  if (x === W - 30 && y === 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x - 20, y);
+    ctx.stroke();
+  }
+  
+  // 左下角
+  if (x === 30 && y === H - 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, y - 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + 20, y);
+    ctx.stroke();
+  }
+  
+  // 右下角
+  if (x === W - 30 && y === H - 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, y - 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x - 20, y);
+    ctx.stroke();
+  }
+}
+
+// 八卦符号
+function drawBaguaSymbols(ctx, W, H, gua, colors) {
+  const centerX = W / 2;
+  const centerY = H / 2;
+  
+  // 绘制八卦符号在四个角落
+  const positions = [
+    { x: 100, y: 100 },
+    { x: W - 100, y: 100 },
+    { x: 100, y: H - 100 },
+    { x: W - 100, y: H - 100 }
+  ];
+  
+  positions.forEach((pos, index) => {
+    drawGuaSymbol(ctx, pos.x, pos.y, gua, colors);
+  });
+}
+
+function drawGuaSymbol(ctx, x, y, gua, colors) {
+  ctx.fillStyle = colors.primary;
+  ctx.font = 'bold 24px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(gua.symbol, x, y);
+}
+
+// 光芒效果
+function drawGlowEffect(ctx, x, y, colors) {
+  // 绘制多层光芒
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.arc(x, y, 80 + i * 20, 0, Math.PI * 2);
+    ctx.strokeStyle = colors.primary + (30 - i * 6).toString(16);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+// 专业文字绘制
+function drawProfessionalText(ctx, W, H, config, bazi) {
+  const colors = config.colors;
+  
+  // 标题
+  ctx.fillStyle = colors.primary;
+  ctx.font = 'bold 56px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(config.label, W / 2, 150);
+  
+  // 卦象信息
+  ctx.font = '28px serif';
+  ctx.fillText(`${gua.name}卦 · ${gua.nature}`, W / 2, 200);
+  
+  // 个人信息
+  ctx.font = '24px serif';
+  ctx.fillText(`${state.name} · ${state.birthDate}`, W / 2, H - 200);
+  
+  // 五行信息
+  ctx.font = '20px serif';
+  ctx.fillStyle = colors.text;
+  ctx.fillText(`金${b.wc.金} 木${b.wc.木} 水${b.wc.水} 火${b.wc.火} 土${b.wc.土}`, W / 2, H - 150);
+  
+  // 祝福语
+  ctx.font = 'bold 32px serif';
+  ctx.fillStyle = colors.primary;
+  ctx.fillText(config.blessing, W / 2, H - 80);
+}
+
+// 获取符文
+function getFuWen(type) {
+  const words = FU_WEN_DATABASE[type];
+  return words[Math.floor(Math.random() * words.length)];
+}
+
+// 风格特定的绘制函数
+function drawTaoistStyle(ctx, W, H, config, bazi, gua, colors) {
+  drawProfessionalTalisman(ctx, W, H, config, bazi, gua, colors);
+}
+
+function drawGuochaoStyle(ctx, W, H, config, bazi, gua, colors) {
+  // 国潮风格 - 更现代的设计
+  drawProfessionalTalisman(ctx, W, H, config, bazi, gua, colors);
+  
+  // 添加国潮特有的装饰
+  drawGuochaoDecorations(ctx, W, H, colors);
+}
+
+function drawInkStyle(ctx, W, H, config, bazi, gua, colors) {
+  // 简约风格 - 墨色设计
+  drawProfessionalTalisman(ctx, W, H, config, bazi, gua, colors);
+  
+  // 添加墨色效果
+  drawInkEffects(ctx, W, H, colors);
+}
+
+// 国潮装饰
+function drawGuochaoDecorations(ctx, W, H, colors) {
+  // 添加现代几何元素
+  ctx.strokeStyle = colors.secondary;
+  ctx.lineWidth = 1;
+  
+  // 绘制几何图案
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4;
+    const x = W / 2 + Math.cos(angle) * 200;
+    const y = H / 2 + Math.sin(angle) * 200;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = colors.secondary;
+    ctx.fill();
+  }
+}
+
+// 墨色效果
+function drawInkEffects(ctx, W, H, colors) {
+  // 添加墨色晕染效果
+  ctx.fillStyle = colors.primary + '10';
+  
+  // 绘制墨色晕染
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath();
+    ctx.arc(
+      Math.random() * W,
+      Math.random() * H,
+      Math.random() * 50 + 20,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+}
+
+// 主绘制函数
+function drawTalisman(){
+  const canvas=document.getElementById("talismanCanvas");
+  const ctx=canvas.getContext("2d");
+  const W=1080,H=1920;
+  const c=state.config, b=state.bazi;
+
+  ctx.clearRect(0,0,W,H);
+
+  // 卦象
+  const guaIdx=(state.birthYear+state.birthMonth+state.birthDay)%8;
+  const gua=BAGUA[guaIdx];
+
+  // 根据五行选择配色方案
+  const element = getDominantElement(b);
+  const colors = TRADITIONAL_COLORS[element] || TRADITIONAL_COLORS.火;
+
+  // 更新配置中的颜色
+  c.colors = colors;
+
+  // 根据风格绘制
+  if(state.style==="taoist") drawTaoistStyle(ctx,W,H,c,b,gua,colors);
+  else if(state.style==="guochao") drawGuochaoStyle(ctx,W,H,c,b,gua,colors);
+  else drawInkStyle(ctx,W,H,c,b,gua,colors);
+}
+
+// 获取主导五行
+function getDominantElement(bazi) {
+  const elements = bazi.wc;
+  let maxElement = '火';
+  let maxValue = 0;
+  
+  for (const [element, value] of Object.entries(elements)) {
+    if (value > maxValue) {
+      maxValue = value;
+      maxElement = element;
+    }
+  }
+  
+  return maxElement;
+}
+
+function drawGua(ctx,gua,cx,cy,size,color){
+  const yaoMap={"乾":[1,1,1],"兑":[1,1,0],"离":[1,0,1],"震":[0,1,1],"巽":[1,0,0],"坎":[0,1,0],"艮":[0,0,1],"坤":[0,0,0]};
+  const yaos=yaoMap[gua.name];
+  const lw=size*1.5, lh=size*0.18, gap=size*0.25;
+  ctx.fillStyle=color;
+  for(let i=0;i<3;i++){
+    const y=cy+(1-i)*(lh+gap)-lh/2;
+    if(yaos[i]===1) ctx.fillRect(cx-lw/2,y,lw,lh);
+    else {ctx.fillRect(cx-lw/2,y,lw*0.42,lh);ctx.fillRect(cx+lw*0.08,y,lw*0.42,lh);}
+  }
+  ctx.font=`bold ${size*0.6}px serif`;ctx.textAlign="center";
+  ctx.fillText(gua.symbol,cx,cy+size*1.8);
+}
+
+function drawTalismanLines(ctx,cx,sY,color,glow){
+  if(glow){ctx.shadowColor=color;ctx.shadowBlur=15;}
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=4;ctx.textAlign="center";
+  ctx.beginPath();ctx.moveTo(cx,sY);ctx.lineTo(cx,sY+200);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,sY-10,25,0,Math.PI*2);ctx.fill();
+  ctx.lineWidth=3;
+  for(let i=0;i<4;i++){
+    const y=sY+30+i*50;
+    ctx.beginPath();ctx.moveTo(cx-80,y);ctx.quadraticCurveTo(cx-40,y-15,cx,y);
+    ctx.quadraticCurveTo(cx+40,y+15,cx+80,y);ctx.stroke();
+  }
+  ctx.beginPath();ctx.moveTo(cx-40,sY+220);ctx.lineTo(cx+40,sY+220);ctx.lineTo(cx,sY+270);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;
+}
+
+function drawTaoist(ctx,W,H,c,b,gua,colors){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#F5E6C8");g.addColorStop(0.5,"#F0DAA0");g.addColorStop(1,"#E8C880");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="rgba(180,140,80,0.06)";ctx.lineWidth=1;
+  for(let x=0;x<W;x+=4){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  ctx.strokeStyle="#C83828";ctx.lineWidth=6;ctx.strokeRect(40,40,W-80,H-80);
+  ctx.lineWidth=3;ctx.strokeRect(60,60,W-120,H-120);
+  ctx.fillStyle="#C83828";ctx.font="bold 72px serif";ctx.textAlign="center";
+  ctx.fillText("敕令",W/2,180);
+  ctx.font="bold 60px serif";ctx.fillText(c.label,W/2,380);
+  drawGua(ctx,gua,W/2,520,80,"#C83828");
+  ctx.font="36px serif";ctx.fillStyle="#8B1A10";
+  ctx.fillText(`${gua.name}卦 · ${gua.nature}`,W/2,660);
+  drawTalismanLines(ctx,W/2,850,c,"#C83828");
+  ctx.fillStyle="#5C1A10";ctx.font="bold 42px serif";
+  ctx.fillText(`弟子 ${state.name}`,W/2,1150);
+  ctx.font="32px serif";ctx.fillText(`生辰：${state.birthDate}`,W/2,1210);
+  ctx.fillText(`八字：${b.pillars}`,W/2,1260);
+  ctx.font="28px serif";ctx.fillStyle="#8B6914";
+  ctx.fillText(`金${b.wc.金} 木${b.wc.木} 水${b.wc.水} 火${b.wc.火} 土${b.wc.土}`,W/2,1320);
+  ctx.fillStyle="#C83828";ctx.font="bold 48px serif";
+  ctx.fillText(c.blessing,W/2,1420);
+  if(!state.isVip){ctx.fillStyle="rgba(139,26,16,0.3)";ctx.font="20px serif";ctx.fillText("AI Newland 生成",W/2,1850);}
+}
+
+function drawGuochao(ctx,W,H,c,b,gua,colors){
+  const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W);
+  g.addColorStop(0,colors.main+"30");g.addColorStop(0.5,"#0A0A15");g.addColorStop(1,"#050508");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="rgba(255,255,255,0.3)";
+  for(let i=0;i<50;i++){const x=Math.random()*W,y=Math.random()*H,r=Math.random()*2;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+  ctx.strokeStyle=colors.main;ctx.lineWidth=3;ctx.shadowColor=colors.main;ctx.shadowBlur=20;
+  ctx.strokeRect(40,40,W-80,H-80);ctx.shadowBlur=0;
+  ctx.fillStyle=colors.main;ctx.font="bold 64px sans-serif";ctx.textAlign="center";
+  ctx.shadowColor=colors.main;ctx.shadowBlur=15;ctx.fillText(c.label,W/2,180);ctx.shadowBlur=0;
+  drawGua(ctx,gua,W/2,380,90,colors.main);
+  ctx.fillStyle=colors.main+"CC";ctx.font="32px sans-serif";
+  ctx.fillText(`${gua.name} · ${gua.nature}`,W/2,540);
+  drawTalismanLines(ctx,W/2,720,c,colors.main,true);
+  ctx.fillStyle="#FFFFFF";ctx.font="bold 48px sans-serif";
+  ctx.fillText(state.name,W/2,1120);
+  ctx.fillStyle="#9CA3AF";ctx.font="28px sans-serif";
+  ctx.fillText(state.birthDate,W/2,1180);ctx.fillText(b.pillars,W/2,1230);
+  // 五行条
+  const els=["金","木","水","火","土"],ec=["#C8A951","#4A8B3A","#2E5C8A","#C83828","#B8860B"];
+  const bw=120,bg=20,total=5*bw+4*bg,sx=W/2-total/2,mc=Math.max(...Object.values(b.wc));
+  els.forEach((el,i)=>{
+    const x=sx+i*(bw+bg),h=(b.wc[el]/mc)*60;
+    ctx.fillStyle=ec[i]+"30";ctx.fillRect(x,1300,bw,60);
+    ctx.fillStyle=ec[i];ctx.fillRect(x,1300+(60-h),bw,h);
+    ctx.font="bold 24px sans-serif";ctx.textAlign="center";
+    ctx.fillText(el,x+bw/2,1290);ctx.fillText(b.wc[el],x+bw/2,1395);
+  });
+  ctx.fillStyle=colors.main;ctx.font="bold 42px sans-serif";ctx.textAlign="center";
+  ctx.shadowColor=colors.main;ctx.shadowBlur=10;ctx.fillText(c.blessing,W/2,1480);ctx.shadowBlur=0;
+  if(!state.isVip){ctx.fillStyle="rgba(255,255,255,0.2)";ctx.font="18px sans-serif";ctx.fillText("AI Newland",W/2,1850);}
+}
+
+function drawInk(ctx,W,H,c,b,gua,colors){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#FAF8F0");g.addColorStop(1,"#F0EDE5");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<8;i++){
+    const x=Math.random()*W,y=Math.random()*H,r=100+Math.random()*200;
+    const ig=ctx.createRadialGradient(x,y,0,x,y,r);
+    ig.addColorStop(0,"rgba(60,60,60,0.04)");ig.addColorStop(1,"rgba(60,60,60,0)");
+    ctx.fillStyle=ig;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.strokeStyle=colors.main+"60";ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(W/2,H/2,480,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=colors.text;ctx.font="bold 56px serif";ctx.textAlign="center";
+  ctx.fillText(c.label,W/2,200);
+  drawGua(ctx,gua,W/2,380,70,colors.text);
+  ctx.fillStyle=colors.text+"AA";ctx.font="28px serif";
+  ctx.fillText(`${gua.name}卦 · ${gua.nature}`,W/2,530);
+  drawTalismanLines(ctx,W/2,720,c,colors.text);
+  ctx.fillStyle=colors.text;ctx.font="bold 40px serif";
+  ctx.fillText(state.name,W/2,1120);
+  ctx.fillStyle=colors.text+"99";ctx.font="26px serif";
+  ctx.fillText(state.birthDate,W/2,1175);ctx.fillText(b.pillars,W/2,1220);
+  ctx.font="24px serif";ctx.fillStyle=colors.text+"80";
+  ctx.fillText(`金${b.wc.金}  木${b.wc.木}  水${b.wc.水}  火${b.wc.火}  土${b.wc.土}`,W/2,1290);
+  ctx.fillStyle=colors.text;ctx.font="bold 40px serif";
+  ctx.fillText(c.blessing,W/2,1400);
+  ctx.fillStyle="#C83828";ctx.fillRect(W/2-40,1450,80,80);
+  ctx.fillStyle="#FAF8F0";ctx.font="bold 32px serif";ctx.fillText("符",W/2,1505);
+  if(!state.isVip){ctx.fillStyle="rgba(100,100,100,0.2)";ctx.font="18px serif";ctx.fillText("AI Newland",W/2,1850);}
+}
+
+// ============ 保存/付费 ============
+function saveImage(){
+  if(!state.isVip){showPayModal();return;}
+  const canvas=document.getElementById("talismanCanvas");
+  const link=document.createElement("a");
+  link.download=`${state.name}_专属符箓.png`;
+  link.href=canvas.toDataURL("image/png");
+  link.click();
+}
+
+function showPayModal(){document.getElementById("payModal").classList.add("show");}
+function closePayModal(){document.getElementById("payModal").classList.remove("show");}
+
+function verifyCode(){
+  const code=document.getElementById("unlockInput").value.trim().toUpperCase();
+  const valid=["AINL2026","FUSHUI2026","TALISMAN"];
+  if(valid.includes(code)){
+    state.isVip=true;
+    localStorage.setItem("unlockCode",code);
+    closePayModal();
+    drawTalisman();
+    fillInfo();
+    alert("解锁成功！现在可以保存高清无水印符图了。");
+  } else {
+    alert("解锁码无效，请确认后重试。");
+  }
+}
+
+function backToForm(){
+  document.getElementById("resultPage").classList.remove("show");
+  document.getElementById("formPage").style.display="block";
+}
+
+// 初始化
+initUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+name: 自动部署符箓生成器
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'index.html'
+      - '.github/workflows/auto-deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Backup existing files
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 106.14.237.27
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          mkdir -p /var/www/subproject/backups
+          cp /var/www/subproject/index.html /var/www/subproject/backups/backup_$(date +%Y%m%d_%H%M%S).html 2>/dev/null || true
+
+    - name: Upload index.html
+      uses: appleboy/scp-action@v1.0.0
+      with:
+        host: 106.14.237.27
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        source: "index.html"
+        target: "/var/www/subproject/"
+        overwrite: true
+        strip_components: 0
+
+    - name: Set permissions and reload
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 106.14.237.27
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          chmod 644 /var/www/subproject/index.html
+          systemctl restart nginx 2>/dev/null || nginx -s reload 2>/dev/null || true
+          echo "=== 部署完成 ==="
+          echo "时间: $(date)"
+          echo "提交: ${{ github.sha }}"
+          echo "访问: https://ai-newland.com/subproject/"
+          ls -lh /var/www/subproject/index.html
+
+    - name: Deployment summary
+      run: |
+        echo "🚀 符箓生成器自动部署完成"
+        echo "📅 $(date)"
+        echo "🔗 https://ai-newland.com/subproject/"
+        echo "📝 ${{ github.event.head_commit.message }}"
